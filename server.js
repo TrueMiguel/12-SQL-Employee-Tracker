@@ -29,7 +29,16 @@ class UserInput {
             }
         ]);
 
-        console.log(options)
+        return options;
         
     }
 }
+
+// calling the userInput prompt
+const userInput = new UserInput()
+userInput.run()
+    .then(selectedOption => {
+        console.log(`You selected: ${selectedOption}`)
+    })
+
+db.query(`SELECT * FROM department`)
