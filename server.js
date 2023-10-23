@@ -166,22 +166,14 @@ const employeeQuestions = [
 
 start();
 
-// runPromt()
-//     .then(selectedOption => {
-//         console.log(`You selected: ${selectedOption}`)
-//     })
-//     if (selectedOption === 'View All Employees') {
-//         db.query(`SELECT * FROM department`, function (err, results) {
-//             console.table(results);
-//         });
-//         runPromt()
-// }
-
-
-// db.query(`SELECT * FROM role`, function (err, results) {
-//     console.table(results);
-// });
-
-// db.query(`SELECT * FROM employee`, function (err, results) {
-//     console.table(results);
-// });
+// listOfRoles = db.query('SELECT title FROM role', function (err, results) {
+    //     if (err) {
+    //         console.error('Error: ', err);
+    //         return;
+    //     }
+    
+    //     const roleTitles = results.map(role => role.title);
+    //     console.log(roleTitles);
+    
+    //     // You can use roleTitles or return it for further use
+    // });
