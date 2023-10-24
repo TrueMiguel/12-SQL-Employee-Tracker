@@ -128,13 +128,15 @@ const employeeQuestions = [
       type: 'list',
       name: 'Role',
       message: 'What is their role: ',
-      choices: []
+      choices: [],
+      loop: false
     },
     {
       type: 'list',
       name: 'Manager',
       message: 'Who is their manager: ',
-      choices: []
+      choices: [],
+      loop: false
     },
   ];
 
@@ -152,7 +154,7 @@ function fetchRoles(callback) {
 
 // function to fetch the list of Managers
 function fetchManagers(callback) {
-    db.query('SELECT first_name, last_name FROM employee WHERE manager_id IS NULL', function(err, results) {
+    db.query('SELECT first_name, last_name FROM employee', function(err, results) {
         if (err) {
             console.error("Error: ", err);
         } else {
@@ -161,7 +163,7 @@ function fetchManagers(callback) {
         }
     });
 }
-  
+
 // function to prompt for user data
 class AddEmployeePrompt {
 
@@ -181,12 +183,13 @@ class AddEmployeePrompt {
         //updating the role question with the current role titles
         questions[2].choices = roles;
 
-        //getting the list of managers that have NULL 
+        //getting the list of managers and including null
         const managers = await new Promise ((resolve, reject) => {
             fetchManagers((err, allManagers) => {
                 if (err) {
                     reject(err);
                 } else {
+                    allManagers.push('NULL');
                     resolve(allManagers)
                 }
             });
@@ -196,29 +199,71 @@ class AddEmployeePrompt {
         questions[3].choices = managers;
 
         const answers = await inquirer.prompt(questions);
-        console.log('Employee Details:');
-        console.log('First Name:', answers.firstName);
-        console.log('Last Name:', answers.lastName);
-        console.log('Role:', answers.Role);
-        console.log('Manager:', answers.Manager);
-        start();
+        
+        // function to insert the new employe information into the employee table
+        async function insertEmployee() {
+
+        let role_id = undefined;
+        let manager_id = undefined;
+        const manager_name = answers.Manager.split(' ');
+
+        //making a new Promise to force trigger the update to the er_id
+        const er_id = await new Promise((resolve, reject) => {
+            db.query(`SELECT id FROM role WHERE title = "${answers.Role}"`, (err, results) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(results);
+                }
+            });
+            });
+            
+        //making a new Promise to force trigger the update to the em_id
+        const em_id = await new Promise((resolve, reject) => {
+            db.query(`SELECT id FROM employee WHERE first_name = "${manager_name[0]}" AND last_name = "${manager_name[1]}"`, (err, results) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(results);
+                }
+            });
+            });
+            
+        //updating the role_id from the er_id
+        if (er_id.length > 0) {
+        role_id = er_id[0].id;
+        }
+        
+        //updating the manager_id from the em_id
+        if (em_id.length > 0) {
+        manager_id = em_id[0].id;
+        }
+        
+        // the query to INSERT the gathered information into the employee table
+        db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("${answers.firstName}", "${answers.lastName}", ${role_id}, ${manager_id}
+        )`)
+
+        // displaying the table
+        db.query('SELECT * FROM employee', function (err, results) {
+            if (err) {
+                console.error('Error: ', err);
+            } else {
+                console.table(results)
+                start();
+            }
+        })
+    }
+
+    await insertEmployee()
+
     }
   }
   
-  // function for adding an employee
-  async function addEmployee() {
-    const userInput = new AddEmployeePrompt();
-    userInput.run(employeeQuestions);
-  }
+// function for adding an employee
+async function addEmployee() {
+const userInput = new AddEmployeePrompt();
+userInput.run(employeeQuestions);
+}
 
 start();
 
-// listOfRoles = db.query('SELECT title FROM role', function (err, results) {
-    //     if (err) {
-    //         console.error('Error: ', err);
-    //         return;
-    //     }
-    
-    //     const roleTitles = results.map(role => role.title);
-    //     console.log(roleTitles);
-    // });
