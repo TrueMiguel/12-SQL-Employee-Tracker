@@ -125,36 +125,83 @@ const employeeQuestions = [
       message: 'What is the last name: ',
     },
     {
-      type: 'input',
+      type: 'list',
       name: 'Role',
       message: 'What is their role: ',
+      choices: []
     },
     {
-      type: 'input',
+      type: 'list',
       name: 'Manager',
-      message: 'Who is their manager (NULL if none): ',
+      message: 'Who is their manager: ',
+      choices: []
     },
   ];
-  
-  // function to prompt for user data
-  class AddEmployeePrompt {
-    async run(questions) {
 
-        db.query('SELECT title FROM department', function (err, results) {
-            if (err) {
-                console.error('Error: ', err);
-            } else {
-                console.table(results, tableConfig);
-            }
-        });
+// function to fetch the list of roles
+function fetchRoles(callback) {
+    db.query('SELECT title FROM role', function(err, results) {
+        if (err) {
+            console.error("Error: ", err);
+        } else {
+            const roleTitles = results.map(role => role.title);
+            callback(null, roleTitles)
+        }
+    });
+}
+
+// function to fetch the list of Managers
+function fetchManagers(callback) {
+    db.query('SELECT first_name, last_name FROM employee WHERE manager_id IS NULL', function(err, results) {
+        if (err) {
+            console.error("Error: ", err);
+        } else {
+            const managerNames = results.map(manager => `${manager.first_name} ${manager.last_name}`);
+            callback(null, managerNames);
+        }
+    });
+}
+  
+// function to prompt for user data
+class AddEmployeePrompt {
+
+    async run(questions) {
         
-      const answers = await inquirer.prompt(questions);
-      console.log('Employee Details:');
-      console.log('First Name:', answers.firstName);
-      console.log('Last Name:', answers.lastName);
-      console.log('Role:', answers.Role);
-      console.log('Manager:', answers.Manager);
-      start();
+        // getting the list of roles on a await
+        const roles = await new Promise((resolve, reject) => {
+            fetchRoles((err, roleTitles) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(roleTitles);
+                }
+            });
+        });
+
+        //updating the role question with the current role titles
+        questions[2].choices = roles;
+
+        //getting the list of managers that have NULL 
+        const managers = await new Promise ((resolve, reject) => {
+            fetchManagers((err, allManagers) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(allManagers)
+                }
+            });
+        });
+
+        // updating the manager questions with the current list of managers
+        questions[3].choices = managers;
+
+        const answers = await inquirer.prompt(questions);
+        console.log('Employee Details:');
+        console.log('First Name:', answers.firstName);
+        console.log('Last Name:', answers.lastName);
+        console.log('Role:', answers.Role);
+        console.log('Manager:', answers.Manager);
+        start();
     }
   }
   
@@ -174,6 +221,4 @@ start();
     
     //     const roleTitles = results.map(role => role.title);
     //     console.log(roleTitles);
-    
-    //     // You can use roleTitles or return it for further use
     // });
