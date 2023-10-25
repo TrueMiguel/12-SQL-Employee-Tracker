@@ -61,6 +61,8 @@ async function handleUserInput() {
         viewAllRoles();
     } else if (selectedOption === 'View All Departments') {
         viewAllDepartments();
+    } else if (selectedOption === 'Update Employee Role') {
+        updateEmployeeRole();
     } else {
         console.log (`You selected: ${selectedOption}`)
         handleUserInput();
@@ -113,7 +115,7 @@ async function viewAllDepartments() {
     });
 }
 
-const employeeQuestions = [
+const addEmployeeQuestions = [
     {
       type: 'input',
       name: 'firstName',
@@ -262,7 +264,110 @@ class AddEmployeePrompt {
 // function for adding an employee
 async function addEmployee() {
 const userInput = new AddEmployeePrompt();
-userInput.run(employeeQuestions);
+userInput.run(addEmployeeQuestions);
+}
+
+// questions to ask for which employee and role to update
+const employeeRoleQuestions = [
+    {
+      type: 'list',
+      name: 'employee',
+      message: 'Which employee to update: ',
+      choices: [],
+      loop: false
+    },
+    {
+      type: 'list',
+      name: 'role',
+      message: 'Which role to update: ',
+      choices: [],
+      loop: false
+    },
+  ];
+
+// class to run the employee role update questions and then to update the table
+class UpdateEmployeeRole {
+
+    async run(questions) {
+
+        //getting the list of managers and including null
+        const managers = await new Promise ((resolve, reject) => {
+            fetchManagers((err, allManagers) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    allManagers.push('NULL');
+                    resolve(allManagers)
+                }
+            });
+        });
+
+        // updating the manager questions with the current list of managers
+        questions[0].choices = managers;
+
+        // getting the list of roles on a await
+        const roles = await new Promise((resolve, reject) => {
+            fetchRoles((err, roleTitles) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(roleTitles);
+                }
+            });
+        });
+
+        //updating the role question with the current role titles
+        questions[1].choices = roles;
+
+        const answers = await inquirer.prompt(questions);
+
+        console.log(answers.employee)
+        console.log(answers.role)
+
+        async function updateRole() {
+            
+            let role_id = undefined;
+            const employee_name = answers.employee.split(' ')
+
+            //making a new Promise to force trigger the update to the er_id
+            const er_id = await new Promise((resolve, reject) => {
+            db.query(`SELECT id FROM role WHERE title = "${answers.role}"`, (err, results) => {
+                if (err) {
+                reject(err);
+                } else {
+                resolve(results);
+                }
+            });
+            });
+
+            //updating the role_id from the er_id
+            if (er_id.length > 0) {
+            role_id = er_id[0].id;
+            }
+
+            db.query(`UPDATE employee SET role_id = ${role_id} WHERE first_name = "${employee_name[0]}" AND last_name = "${employee_name[1]}"`)
+
+            // displaying the table
+            db.query(`SELECT * FROM employee WHERE first_name = "${employee_name[0]}" AND last_name = "${employee_name[1]}"`, function (err, results) {
+                if (err) {
+                    console.error('Error: ', err);
+                } else {
+                    console.table(results)
+                    start();
+                }
+            })
+
+
+        }
+        await updateRole()
+    }
+}
+
+
+// function for updating employee role
+async function updateEmployeeRole() {
+    const userInput = new UpdateEmployeeRole();
+    userInput.run(employeeRoleQuestions)
 }
 
 start();
