@@ -63,6 +63,8 @@ async function handleUserInput() {
         viewAllDepartments();
     } else if (selectedOption === 'Update Employee Role') {
         updateEmployeeRole();
+    } else if (selectedOption === 'Add Role') {
+        newRole();
     } else {
         console.log (`You selected: ${selectedOption}`)
         handleUserInput();
@@ -321,9 +323,6 @@ class UpdateEmployeeRole {
 
         const answers = await inquirer.prompt(questions);
 
-        console.log(answers.employee)
-        console.log(answers.role)
-
         async function updateRole() {
             
             let role_id = undefined;
@@ -363,11 +362,114 @@ class UpdateEmployeeRole {
     }
 }
 
-
 // function for updating employee role
 async function updateEmployeeRole() {
     const userInput = new UpdateEmployeeRole();
     userInput.run(employeeRoleQuestions)
+}
+
+// questions to ask for adding a new role
+const newRoleQuestions = [
+    {
+      type: 'input',
+      name: 'title',
+      message: 'What is the name of the title: ',
+    },
+    {
+      type: 'input',
+      name: 'salary',
+      message: 'What is the salary: ',
+    },
+    {
+      type: 'list',
+      name: 'department',
+      message: 'Which department for this role: ',
+      choices: [],
+      loop: false
+    },
+  ];
+
+// function to get the list of departments
+function fetchDepartments(callback) {
+    db.query('SELECT name FROM department', function(err, results) {
+        if (err) {
+            console.error("Error: ", err);
+        } else {
+            const depName = results.map(department => department.name);
+            callback(null, depName)
+        }
+    });
+}
+
+// class to run the new role questions and to update the table
+class NewRole {
+
+    async run(questions) {
+
+        //getting the list of departments
+        const departments = await new Promise ((resolve, reject) => {
+            fetchDepartments((err, allDepartments) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(allDepartments)
+                }
+            });
+        });
+
+        // updating the manager questions with the current list of managers
+        questions[2].choices = departments;
+
+        const answers = await inquirer.prompt(questions);
+
+        console.log(answers.title)
+        console.log(answers.salary)
+        console.log(answers.department)
+
+        async function addRole() {
+
+            let department_id = undefined;
+
+            // making a Promise to get the department id
+            const d_id = await new Promise((resolve, reject) => {
+                db.query(`SELECT id FROM department WHERE name = "${answers.department}"`, (err, results) => {
+                    if (err) {
+                    reject(err);
+                    } else {
+                    resolve(results);
+                    }
+                    });
+                });
+
+            //updating the department_id from the d_id
+            if (d_id.length > 0) {
+            department_id = d_id[0].id;
+            }
+
+            // the query to INSERT the gathered information into the employee table
+            db.query(`INSERT INTO role (title, salary, department_id) VALUES ("${answers.title}", "${answers.salary}", ${department_id})`)
+
+            // displaying the table
+            db.query('SELECT * FROM role', function (err, results) {
+                if (err) {
+                    console.error('Error: ', err);
+                } else {
+                    console.table(results)
+                    start();
+                }
+            })
+
+        }
+
+        await addRole()
+    }
+
+}
+
+// function for adding a new role
+async function newRole() {
+    const userInput = new NewRole();
+    userInput.run(newRoleQuestions)
 }
 
 start();
