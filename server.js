@@ -65,6 +65,8 @@ async function handleUserInput() {
         updateEmployeeRole();
     } else if (selectedOption === 'Add Role') {
         newRole();
+    } else if (selectedOption === 'Add Department') {
+        newDepartment();
     } else {
         console.log (`You selected: ${selectedOption}`)
         handleUserInput();
@@ -94,10 +96,8 @@ async function viewAllRoles() {
         if (err) {
             console.error('Error: ', err);
         } else {
-            const tableConfig = {
-                columns: { index: { display: false } }
-            };
-            console.table(results, tableConfig);
+            
+            console.table(results);
         }
     start();
     });
@@ -108,15 +108,13 @@ async function viewAllDepartments() {
         if (err) {
             console.error('Error: ', err);
         } else {
-            const tableConfig = {
-                columns: { index: { display: false } }
-            };
-            console.table(results, tableConfig);
+            console.table(results);
         }
     start();
     });
 }
 
+// questions to for adding the employee
 const addEmployeeQuestions = [
     {
       type: 'input',
@@ -422,10 +420,6 @@ class NewRole {
 
         const answers = await inquirer.prompt(questions);
 
-        console.log(answers.title)
-        console.log(answers.salary)
-        console.log(answers.department)
-
         async function addRole() {
 
             let department_id = undefined;
@@ -460,7 +454,6 @@ class NewRole {
             })
 
         }
-
         await addRole()
     }
 
@@ -470,6 +463,45 @@ class NewRole {
 async function newRole() {
     const userInput = new NewRole();
     userInput.run(newRoleQuestions)
+}
+
+// questions for creating new department
+const departmentQuestions = [
+    {
+        type: 'input',
+        name: 'department',
+        message: 'What is the name of the department: ',
+      }
+]
+
+// class to run the department question and to update the table
+class Department {
+    async run(questions) {
+
+        const answers = await inquirer.prompt(questions);
+
+        async function createDepartment() {
+
+            db.query(`INSERT INTO department (name) VALUES ("${answers.department}")`)
+
+            // displaying the table
+            db.query('SELECT * FROM department', function (err, results) {
+                if (err) {
+                    console.error('Error: ', err);
+                } else {
+                    console.table(results)
+                    start();
+                }
+            })
+        }
+        await createDepartment()
+    }
+}
+
+// function for adding the new department
+async function newDepartment() {
+    const userInput = new Department();
+    userInput.run(departmentQuestions)
 }
 
 start();
