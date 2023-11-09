@@ -17,11 +17,9 @@ A database tracker for employees along with their roles and  departments.
 - [Built With](#built_with)
 - [Features](#features)
 - [Deployment Location](#deployment_location)
-- [Testing](#testing)
 - [Credits](#credits)
 - [License](#license)
 - [Final Note](#final_note)
-- [Questions](#questions)
 
 ---
 
@@ -58,13 +56,11 @@ Live site: N/A. This is in terminal
 
 Github: https://github.com/TrueMiguel/12-SQL-Employee-Tracker
 
+Vide demonstration: https://drive.google.com/file/d/1FShtNm-TXJ-9TF9xW2IFFxQT_Vc_KqGv/view 
+
 <!-- screen shot example of project -->
-<!-- ![Page on start up](assets/Images/screen-shot1.JPG) -->
 
----
-
-## Testing <a id="testing"></a>
-N/A
+![Employee tracker](assets/Screenshot%201.png)
 
 ---
 
@@ -101,9 +97,6 @@ MIT License
 ## Final Note <a id="final_note"></a>
 <!-- Final Note -->
 This is a easy simple application to manage your employees, their roles, and their departments. 
-
-## Questions <a id="questions"></a>
-For any questions about this program, please reach out to me on GitHub: n/a or to my email: n/a
 
 ---
     
